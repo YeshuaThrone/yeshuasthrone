@@ -6,7 +6,9 @@ import {
   type WebSocketLike,
   type WebSocketLikeConstructor,
 } from "@supabase/supabase-js";
-import type { Database } from "./types";
+import { emptyPlan, runQuery, type QueryPlan } from "./fixture-query";
+import { releaseFixtures } from "./fixtures";
+import type { Database, ReleaseWithTracksRow } from "./types";
 
 /**
  * Server-only Supabase access. Two clients:
@@ -23,6 +25,11 @@ import type { Database } from "./types";
  * emails so the signup form is exercisable end-to-end without a database
  * (first insert succeeds, a duplicate is a `23505` like Postgres). Rows are
  * lost on restart; a warning says so on every write.
+ *
+ * With TEST_FIXTURES=1 as well, `releases` reads resolve from a fixed set of
+ * rows (`fixtures.ts`) evaluated with the same filters and ordering
+ * `queries.ts` sends, so the pages and the e2e suite run against realistic
+ * data with no database. Never set in production.
  */
 
 export type DbClient = SupabaseClient<Database>;
@@ -89,6 +96,9 @@ interface ShimResponse {
 type ShimKind = "read" | "write" | "accepted" | "duplicate";
 type ShimShape = "many" | "one";
 
+/** Rows a read resolves from; the plain shim has none, the fixture shim has releases. */
+type ShimRows = readonly Record<string, unknown>[];
+
 /**
  * Minimal stand-in for a PostgREST query builder: every chained filter or
  * modifier returns the same builder; awaiting it yields an empty read or a
@@ -96,16 +106,27 @@ type ShimShape = "many" | "one";
  * server actions use; anything else is a bug and surfaces as a TypeError.
  */
 class ShimQuery implements PromiseLike<ShimResponse> {
+  private plan: QueryPlan = emptyPlan;
+
   constructor(
     private readonly kind: ShimKind,
     private readonly shape: ShimShape,
+    private readonly rows: ShimRows = [],
   ) {}
 
   private chain(): ShimQuery {
     return this;
   }
-  select = () => (this.kind === "read" ? this : new ShimQuery(this.kind, "many"));
-  eq = this.chain;
+  private reshape(shape: ShimShape): ShimQuery {
+    const next = new ShimQuery(this.kind, shape, this.rows);
+    next.plan = this.plan;
+    return next;
+  }
+  select = () => (this.kind === "read" ? this : this.reshape("many"));
+  eq = (column: string, value: unknown) => {
+    this.plan = { ...this.plan, filters: [...this.plan.filters, { column, value }] };
+    return this;
+  };
   neq = this.chain;
   is = this.chain;
   in = this.chain;
@@ -113,11 +134,23 @@ class ShimQuery implements PromiseLike<ShimResponse> {
   gte = this.chain;
   lt = this.chain;
   lte = this.chain;
-  order = this.chain;
-  limit = this.chain;
+  order = (column: string, opts?: { ascending?: boolean; nullsFirst?: boolean }) => {
+    const ascending = opts?.ascending ?? true;
+    // PostgREST default: nulls first when descending, last when ascending.
+    const nullsFirst = opts?.nullsFirst ?? !ascending;
+    this.plan = {
+      ...this.plan,
+      orders: [...this.plan.orders, { column, ascending, nullsFirst }],
+    };
+    return this;
+  };
+  limit = (count: number) => {
+    this.plan = { ...this.plan, limit: count };
+    return this;
+  };
   range = this.chain;
-  single = () => new ShimQuery(this.kind, "one");
-  maybeSingle = () => new ShimQuery(this.kind, "one");
+  single = () => this.reshape("one");
+  maybeSingle = () => this.reshape("one");
 
   private response(): ShimResponse {
     if (this.kind === "write") {
@@ -141,8 +174,9 @@ class ShimQuery implements PromiseLike<ShimResponse> {
     if (this.kind === "accepted") {
       return { data: null, error: null, count: null, status: 201, statusText: "Created" };
     }
+    const matched = runQuery(this.rows, this.plan);
     return {
-      data: this.shape === "many" ? [] : null,
+      data: this.shape === "many" ? matched : (matched[0] ?? null),
       error: null,
       count: null,
       status: 200,
@@ -196,23 +230,51 @@ class ShimDropAlertsTable extends ShimTable {
   };
 }
 
+/** `releases` backed by fixture rows; reads honour the recorded filters/order. */
+class ShimReleasesTable extends ShimTable {
+  constructor(private readonly rows: readonly ReleaseWithTracksRow[]) {
+    super();
+  }
+  select = () => new ShimQuery("read", "many", this.rows);
+}
+
+export interface ShimOptions {
+  /** Rows the `releases` table serves. Empty = the no-releases state. */
+  releases?: readonly ReleaseWithTracksRow[];
+}
+
 export class InMemoryDbShim {
   readonly isShim = true as const;
   private readonly dropAlertEmails = new Set<string>();
+  private readonly releases: readonly ReleaseWithTracksRow[];
 
-  // Every table but drop_alerts behaves the same: empty reads, refused writes.
+  constructor(options: ShimOptions = {}) {
+    this.releases = options.releases ?? [];
+  }
+
+  // Every other table behaves the same: empty reads, refused writes.
   from(table: string): ShimTable {
-    return table === "drop_alerts"
-      ? new ShimDropAlertsTable(this.dropAlertEmails)
-      : new ShimTable();
+    if (table === "drop_alerts") return new ShimDropAlertsTable(this.dropAlertEmails);
+    if (table === "releases") return new ShimReleasesTable(this.releases);
+    return new ShimTable();
   }
 }
 
-export function createInMemoryShim(): DbClient {
+/** TEST_FIXTURES=1 switches the shim's `releases` table to the fixture rows. */
+export function fixturesEnabled(env: DbEnvSource = process.env): boolean {
+  return env.TEST_FIXTURES === "1";
+}
+
+export function createInMemoryShim(options: ShimOptions = {}): DbClient {
   // The shim is structurally a strict subset of SupabaseClient. The cast is
   // the single place we assert that; keep ShimTable/ShimQuery in step with
   // the methods queries.ts and the server actions actually call.
-  return new InMemoryDbShim() as unknown as DbClient;
+  return new InMemoryDbShim(options) as unknown as DbClient;
+}
+
+/** The shim a no-env runtime gets: fixture-backed only when TEST_FIXTURES=1. */
+function createRuntimeShim(): DbClient {
+  return createInMemoryShim(fixturesEnabled() ? { releases: releaseFixtures } : {});
 }
 
 export function isInMemoryShim(client: DbClient): boolean {
@@ -244,7 +306,7 @@ let serviceClient: DbClient | undefined;
 export function createAnonClient(env: DbEnv = readDbEnv()): DbClient {
   if (anonClient) return anonClient;
   if (!env.url || !env.anonKey) {
-    anonClient = createInMemoryShim();
+    anonClient = createRuntimeShim();
     return anonClient;
   }
   anonClient = createClient<Database>(env.url, env.anonKey, clientOptions);
@@ -259,7 +321,7 @@ export function createAnonClient(env: DbEnv = readDbEnv()): DbClient {
 export function createServiceClient(env: DbEnv = readDbEnv()): DbClient {
   if (serviceClient) return serviceClient;
   if (!env.url) {
-    serviceClient = createInMemoryShim();
+    serviceClient = createRuntimeShim();
     return serviceClient;
   }
   if (!env.serviceRoleKey) {

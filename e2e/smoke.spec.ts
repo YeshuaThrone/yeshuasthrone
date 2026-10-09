@@ -1,15 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("site chrome", () => {
-  test("home renders the wordmark and the no-releases copy", async ({ page }) => {
+  test("home renders the wordmark, the flagship, and the drop-list line", async ({ page }) => {
     const response = await page.goto("/");
     expect(response?.status()).toBe(200);
 
     await expect(page.getByRole("link", { name: /yeshua throne — home/i })).toHaveText(
       "YESHUA THRONE",
     );
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Yeshua Throne");
-    await expect(page.getByText(/nothing public yet/i)).toBeVisible();
+    // The fixture flagship (see e2e/release-pages.spec.ts for the full hero contract).
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("CHAMPION");
     await expect(page.getByText(/join the list to hear first/i)).toBeVisible();
 
     const nav = page.getByRole("navigation", { name: "Primary" });

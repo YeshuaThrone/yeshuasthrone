@@ -12,6 +12,7 @@ export const champion: Release = {
   covnantCbtCode: null,
   covnantUrl: null,
   dspLinks: {},
+  featured: true,
   status: "upcoming",
   tracks: [],
 };
@@ -48,6 +49,7 @@ export const releasedSingle: Release = {
   covnantCbtCode: "CBT-7F3A9",
   covnantUrl: "https://covnant-eta.vercel.app/assets/7f3a9",
   dspLinks: { spotify: "https://open.spotify.com/track/x" },
+  featured: false,
   status: "released",
   tracks: [tracks[0]],
 };

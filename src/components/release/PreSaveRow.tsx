@@ -40,11 +40,15 @@ export function PreSaveRow({ dspLinks, mode = "pre-save" }: PreSaveRowProps) {
     // Before release the empty row is a promise worth stating; after release
     // an empty streaming row is just noise (spec: DspLinks renders nothing).
     if (mode === "listen") return null;
-    return <p className="text-sm text-muted">{PRE_SAVE_EMPTY_MESSAGE}</p>;
+    return (
+      <p className="text-sm text-muted" data-testid="presave-row">
+        {PRE_SAVE_EMPTY_MESSAGE}
+      </p>
+    );
   }
 
   return (
-    <ul className="flex flex-wrap gap-2" aria-label={labels.row}>
+    <ul className="flex flex-wrap gap-2" aria-label={labels.row} data-testid="presave-row">
       {DSPS.map((dsp) => {
         const url = dspLinks[dsp.key];
         const chip =

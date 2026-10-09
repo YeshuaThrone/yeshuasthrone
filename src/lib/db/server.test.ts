@@ -3,13 +3,16 @@ import {
   NO_DATABASE_ERROR,
   UNIQUE_VIOLATION_ERROR,
   createAnonClient,
+  createInMemoryShim,
   createServiceClient,
+  fixturesEnabled,
   isDatabaseConfigured,
   isInMemoryShim,
   readDbEnv,
   resetClientsForTests,
   storagePublicBase,
 } from "./server";
+import { releaseFixtures } from "./fixtures";
 
 const NO_ENV = { url: null, anonKey: null, serviceRoleKey: null };
 
@@ -135,5 +138,68 @@ describe("configured clients", () => {
     expect(() =>
       createServiceClient({ ...env, serviceRoleKey: null }),
     ).toThrow(/SUPABASE_SERVICE_ROLE_KEY/);
+  });
+});
+
+describe("fixture-backed shim (TEST_FIXTURES=1)", () => {
+  beforeEach(() => {
+    resetClientsForTests();
+  });
+  afterEach(() => {
+    resetClientsForTests();
+    vi.unstubAllEnvs();
+  });
+
+  it("is off unless TEST_FIXTURES is exactly '1'", () => {
+    expect(fixturesEnabled({})).toBe(false);
+    expect(fixturesEnabled({ TEST_FIXTURES: "true" })).toBe(false);
+    expect(fixturesEnabled({ TEST_FIXTURES: "1" })).toBe(true);
+  });
+
+  it("serves published releases newest-first with nulls first, honouring eq and limit", async () => {
+    const db = createInMemoryShim({ releases: releaseFixtures });
+    const { data } = await db
+      .from("releases")
+      .select("*, tracks(*)")
+      .eq("published", true)
+      .order("release_date", { ascending: false, nullsFirst: true })
+      .order("sort_order", { ascending: false });
+    expect((data as Array<{ slug: string }>).map((r) => r.slug)).toEqual([
+      "champion",
+      "presave-fixture",
+      "throne-room",
+    ]);
+
+    const one = await db
+      .from("releases")
+      .select("*")
+      .eq("slug", "draft-fixture")
+      .eq("published", true)
+      .maybeSingle();
+    expect(one.data).toBeNull();
+
+    const draft = await db.from("releases").select("*").eq("slug", "draft-fixture").maybeSingle();
+    expect((draft.data as { slug: string }).slug).toBe("draft-fixture");
+
+    const limited = await db
+      .from("releases")
+      .select("*")
+      .eq("published", true)
+      .eq("featured", true)
+      .limit(1)
+      .maybeSingle();
+    expect((limited.data as { slug: string }).slug).toBe("champion");
+  });
+
+  it("the no-env runtime shim reads empty without the flag and fixtures with it", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    vi.stubEnv("TEST_FIXTURES", "");
+    const empty = await createAnonClient().from("releases").select("*");
+    expect(empty.data).toEqual([]);
+
+    resetClientsForTests();
+    vi.stubEnv("TEST_FIXTURES", "1");
+    const seeded = await createAnonClient().from("releases").select("*");
+    expect((seeded.data as unknown[]).length).toBe(releaseFixtures.length);
   });
 });
