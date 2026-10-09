@@ -18,7 +18,11 @@ import type { Database } from "./types";
  *
  * With no NEXT_PUBLIC_SUPABASE_URL set, both return an in-memory shim so the
  * build and the no-env runtime work: reads resolve empty (the no-releases
- * state), writes resolve with a `no_database` error rather than pretending.
+ * state) and writes resolve with a `no_database` error rather than pretending.
+ * The one exception is `drop_alerts`: the shim keeps a per-process set of
+ * emails so the signup form is exercisable end-to-end without a database
+ * (first insert succeeds, a duplicate is a `23505` like Postgres). Rows are
+ * lost on restart; a warning says so on every write.
  */
 
 export type DbClient = SupabaseClient<Database>;
@@ -62,15 +66,27 @@ export const NO_DATABASE_ERROR = {
   hint: "",
 } as const;
 
+/** Shape of Postgres' unique_violation as supabase-js reports it. */
+export const UNIQUE_VIOLATION_ERROR = {
+  code: "23505",
+  message: 'duplicate key value violates unique constraint "drop_alerts_email_key"',
+  details: "",
+  hint: "",
+} as const;
+
 interface ShimResponse {
   data: unknown;
-  error: typeof NO_DATABASE_ERROR | null;
+  error: typeof NO_DATABASE_ERROR | typeof UNIQUE_VIOLATION_ERROR | null;
   count: null;
   status: number;
   statusText: string;
 }
 
-type ShimKind = "read" | "write";
+/**
+ * `read` resolves empty; `write` refuses with `no_database`; `accepted` is a
+ * write the in-memory store took; `duplicate` is one it rejected as a 23505.
+ */
+type ShimKind = "read" | "write" | "accepted" | "duplicate";
 type ShimShape = "many" | "one";
 
 /**
@@ -113,6 +129,18 @@ class ShimQuery implements PromiseLike<ShimResponse> {
         statusText: "Service Unavailable",
       };
     }
+    if (this.kind === "duplicate") {
+      return {
+        data: null,
+        error: UNIQUE_VIOLATION_ERROR,
+        count: null,
+        status: 409,
+        statusText: "Conflict",
+      };
+    }
+    if (this.kind === "accepted") {
+      return { data: null, error: null, count: null, status: 201, statusText: "Created" };
+    }
     return {
       data: this.shape === "many" ? [] : null,
       error: null,
@@ -130,19 +158,53 @@ class ShimQuery implements PromiseLike<ShimResponse> {
   }
 }
 
+/** Insert signature shared by the shim tables; the payload is only read by drop_alerts. */
+type ShimInsert = (payload?: unknown) => ShimQuery;
+
 class ShimTable {
   select = () => new ShimQuery("read", "many");
-  insert = () => new ShimQuery("write", "many");
+  insert: ShimInsert = () => new ShimQuery("write", "many");
   upsert = () => new ShimQuery("write", "many");
   update = () => new ShimQuery("write", "many");
   delete = () => new ShimQuery("write", "many");
 }
 
+/** Emails from one `drop_alerts` insert payload, lower-cased like citext. */
+function emailsFromInsert(payload: unknown): string[] {
+  const rows = Array.isArray(payload) ? payload : [payload];
+  return rows.flatMap((row) => {
+    const email = (row as { email?: unknown } | null)?.email;
+    return typeof email === "string" ? [email.toLowerCase()] : [];
+  });
+}
+
+/** The one table the shim actually stores: see the module comment. */
+class ShimDropAlertsTable extends ShimTable {
+  constructor(private readonly emails: Set<string>) {
+    super();
+  }
+  insert: ShimInsert = (payload) => {
+    const incoming = emailsFromInsert(payload);
+    if (incoming.some((e) => this.emails.has(e))) {
+      return new ShimQuery("duplicate", "many");
+    }
+    for (const e of incoming) this.emails.add(e);
+    console.warn(
+      "[db] drop_alerts insert kept in memory only: Supabase is not configured.",
+    );
+    return new ShimQuery("accepted", "many");
+  };
+}
+
 export class InMemoryDbShim {
   readonly isShim = true as const;
-  // Every table behaves the same: empty reads, refused writes.
-  from(): ShimTable {
-    return new ShimTable();
+  private readonly dropAlertEmails = new Set<string>();
+
+  // Every table but drop_alerts behaves the same: empty reads, refused writes.
+  from(table: string): ShimTable {
+    return table === "drop_alerts"
+      ? new ShimDropAlertsTable(this.dropAlertEmails)
+      : new ShimTable();
   }
 }
 
