@@ -1,0 +1,144 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`releaseJsonLd > released: MusicAlbum with one MusicRecording per track 1`] = `
+{
+  "@context": "https://schema.org",
+  "@id": "https://yeshuathrone.com/music/throne-room",
+  "@type": "MusicAlbum",
+  "albumReleaseType": "SingleRelease",
+  "byArtist": {
+    "@type": "MusicGroup",
+    "name": "Yeshua Throne",
+  },
+  "datePublished": "2026-06-12",
+  "description": "The first one out the door.",
+  "image": "https://example.test/artwork/throne-room.jpg",
+  "name": "Throne Room",
+  "numTracks": 2,
+  "track": [
+    {
+      "@id": "https://yeshuathrone.com/music/throne-room#track-1",
+      "@type": "MusicRecording",
+      "byArtist": {
+        "@type": "MusicGroup",
+        "name": "Yeshua Throne",
+      },
+      "datePublished": "2026-06-12",
+      "duration": "PT4M5S",
+      "image": "https://example.test/artwork/throne-room.jpg",
+      "inAlbum": {
+        "@type": "MusicAlbum",
+        "name": "Throne Room",
+        "url": "https://yeshuathrone.com/music/throne-room",
+      },
+      "name": "Throne Room",
+      "position": 1,
+      "url": "https://yeshuathrone.com/music/throne-room",
+    },
+    {
+      "@id": "https://yeshuathrone.com/music/throne-room#track-2",
+      "@type": "MusicRecording",
+      "byArtist": {
+        "@type": "MusicGroup",
+        "name": "Yeshua Throne",
+      },
+      "datePublished": "2026-06-12",
+      "image": "https://example.test/artwork/throne-room.jpg",
+      "inAlbum": {
+        "@type": "MusicAlbum",
+        "name": "Throne Room",
+        "url": "https://yeshuathrone.com/music/throne-room",
+      },
+      "isrcCode": "USABC2600002",
+      "name": "Austin Nights",
+      "position": 2,
+      "url": "https://yeshuathrone.com/music/throne-room",
+    },
+  ],
+  "url": "https://yeshuathrone.com/music/throne-room",
+}
+`;
+
+exports[`releaseJsonLd > upcoming: MusicAlbum with no tracks and no invented date 1`] = `
+{
+  "@context": "https://schema.org",
+  "@id": "https://yeshuathrone.com/music/champion",
+  "@type": "MusicAlbum",
+  "albumProductionType": "StudioAlbum",
+  "albumReleaseType": "AlbumRelease",
+  "byArtist": {
+    "@type": "MusicGroup",
+    "name": "Yeshua Throne",
+  },
+  "name": "CHAMPION",
+  "url": "https://yeshuathrone.com/music/champion",
+}
+`;
+
+exports[`releaseMetadata > released single snapshot 1`] = `
+{
+  "alternates": {
+    "canonical": "/music/throne-room",
+  },
+  "description": "The first one out the door.",
+  "openGraph": {
+    "description": "The first one out the door.",
+    "images": [
+      {
+        "alt": "Throne Room — Yeshua Throne",
+        "height": 630,
+        "url": "/api/og/throne-room",
+        "width": 1200,
+      },
+    ],
+    "locale": "en_US",
+    "siteName": "Yeshua Throne",
+    "title": "Throne Room · Yeshua Throne",
+    "type": "music.song",
+    "url": "/music/throne-room",
+  },
+  "title": "Throne Room",
+  "twitter": {
+    "card": "summary_large_image",
+    "description": "The first one out the door.",
+    "images": [
+      "/api/og/throne-room",
+    ],
+    "title": "Throne Room · Yeshua Throne",
+  },
+}
+`;
+
+exports[`releaseMetadata > upcoming album snapshot 1`] = `
+{
+  "alternates": {
+    "canonical": "/music/champion",
+  },
+  "description": "CHAMPION — Album by Yeshua Throne. Drops here first.",
+  "openGraph": {
+    "description": "CHAMPION — Album by Yeshua Throne. Drops here first.",
+    "images": [
+      {
+        "alt": "CHAMPION — Yeshua Throne",
+        "height": 630,
+        "url": "/api/og/champion",
+        "width": 1200,
+      },
+    ],
+    "locale": "en_US",
+    "siteName": "Yeshua Throne",
+    "title": "CHAMPION · Yeshua Throne",
+    "type": "music.album",
+    "url": "/music/champion",
+  },
+  "title": "CHAMPION",
+  "twitter": {
+    "card": "summary_large_image",
+    "description": "CHAMPION — Album by Yeshua Throne. Drops here first.",
+    "images": [
+      "/api/og/champion",
+    ],
+    "title": "CHAMPION · Yeshua Throne",
+  },
+}
+`;
