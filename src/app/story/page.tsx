@@ -75,7 +75,8 @@ export default function StoryPage() {
         <p>
           <Link
             href="/#alerts"
-            className="inline-flex items-center rounded-full bg-electric px-6 py-3 text-sm font-semibold text-text transition-colors hover:bg-electric-2 hover:text-onyx"
+            // #0066FF behind 14px text is 4.4:1 — below AA. electric-2 on onyx clears it.
+            className="inline-flex items-center rounded-full bg-electric-2 px-6 py-3 text-sm font-semibold text-onyx transition-colors hover:bg-text"
           >
             Get the drop alert
           </Link>
