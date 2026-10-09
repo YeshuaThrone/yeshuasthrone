@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { SocialLinks } from "@/components/layout/SocialLinks";
 import { getBookingContact, site, socials } from "@/content/site";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Contact",
   description: `Booking, press, and where to find ${site.name}.`,
-};
+  path: "/contact",
+});
 
 /** Booking line: a mailto once an address exists, Instagram DMs until then. */
 function BookingLine() {
