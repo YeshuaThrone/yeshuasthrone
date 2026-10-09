@@ -49,3 +49,39 @@ jobs:
           name: playwright-report
           path: playwright-report
           retention-days: 7
+
+  # RLS contract against a real local Supabase: `supabase start` applies
+  # supabase/migrations + seed.sql, then the integration suite runs as the
+  # anon and service roles. Needs Docker (ubuntu-latest has it).
+  db-integration:
+    name: Supabase RLS integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: npm ci
+      - name: Start local Supabase (migrations + seed)
+        run: >-
+          supabase start
+          -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,realtime,postgres-meta
+      - name: Export test credentials
+        run: |
+          supabase status -o env > /tmp/supabase.env
+          # shellcheck disable=SC1091
+          . /tmp/supabase.env
+          {
+            echo "SUPABASE_TEST_URL=$API_URL"
+            echo "SUPABASE_TEST_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_TEST_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+      - run: npm run test:integration
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
