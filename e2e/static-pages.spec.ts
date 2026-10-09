@@ -1,15 +1,7 @@
-import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { blockingViolations } from "./helpers/axe";
 
 const INSTAGRAM = "https://instagram.com/yeshuasthrone";
-
-/** Serious/critical axe violations only — the spec's gate for every page. */
-async function blockingViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).analyze();
-  return results.violations.filter(
-    (violation) => violation.impact === "serious" || violation.impact === "critical",
-  );
-}
 
 test.describe("/story", () => {
   test("renders the bio, the pull line, and the drop-list CTA", async ({ page }) => {
