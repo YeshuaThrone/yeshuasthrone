@@ -74,6 +74,9 @@ jobs:
         with:
           name: lighthouse-report
           path: .lighthouseci
+          # .lighthouseci is a dotdir; without this the step silently uploads nothing.
+          include-hidden-files: true
+          if-no-files-found: error
           retention-days: 14
 
   # RLS contract against a real local Supabase: `supabase start` applies
