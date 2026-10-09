@@ -1,26 +1,57 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Design tokens — Covnant family, dark only.
+ * onyx = page background, ink = raised surfaces.
+ * electric = interactive states (links, focus, active player).
+ * gold = release / drop moments and the Covnant badge only.
+ */
+@theme {
+  --color-onyx: #0d0f12;
+  --color-ink: #15181e;
+  --color-electric: #0066ff;
+  --color-electric-2: #00c8ff;
+  --color-gold: #d4af37;
+  --color-gold-2: #ffd700;
+  --color-text: #f2f4f7;
+  --color-muted: #9aa3b2;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-onyx);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+/* Unlayered so it wins over Tailwind's layered outline utilities. */
+:focus-visible {
+  outline: 2px solid var(--color-electric-2);
+  outline-offset: 2px;
+}
+
+@utility glass-card {
+  background-color: color-mix(in srgb, var(--color-ink) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+}
+
+/* Horizontal gold hairline used to mark a release / drop moment. */
+@utility gold-rule {
+  height: 1px;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-gold) 20%,
+    var(--color-gold-2) 50%,
+    var(--color-gold) 80%,
+    transparent
+  );
 }
