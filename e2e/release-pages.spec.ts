@@ -1,6 +1,6 @@
-import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { E2E_ENV } from "../playwright.config";
+import { blockingViolations } from "./helpers/axe";
 
 /**
  * Runs against the fixture-backed server (TEST_FIXTURES=1, see
@@ -8,13 +8,6 @@ import { E2E_ENV } from "../playwright.config";
  * throne-room (released, two tracks), presave-fixture (upcoming, one apple
  * link), draft-fixture (unpublished).
  */
-
-async function blockingViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).analyze();
-  return results.violations.filter(
-    (violation) => violation.impact === "serious" || violation.impact === "critical",
-  );
-}
 
 test.describe("/ — CHAMPION flagship", () => {
   test("shows the lockup, the studio line, an empty pre-save row, and the CHAMPION form", async ({
