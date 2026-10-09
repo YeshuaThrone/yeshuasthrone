@@ -13,7 +13,17 @@ export default defineConfig({
     baseURL,
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        // The player suite calls audio.play() from a click, but headless
+        // Chromium still gates autoplay; lift it so playback is observable.
+        launchOptions: { args: ["--autoplay-policy=no-user-gesture-required"] },
+      },
+    },
+  ],
   webServer: {
     command: `npm run build && npm run start -- --port ${PORT}`,
     url: baseURL,

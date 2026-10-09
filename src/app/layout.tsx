@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { PlayerBar, PlayerProvider } from "@/components/player";
 import { site } from "@/content/site";
 import "./globals.css";
 
@@ -22,11 +23,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="flex min-h-screen flex-col antialiased">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        {/* Reserved for the ATXLive show feed (phase 2). Renders nothing in v1. */}
-        <section id="shows" hidden />
-        <SiteFooter />
+        {/* One provider, one <audio>: playback survives App Router navigation. */}
+        <PlayerProvider>
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          {/* Reserved for the ATXLive show feed (phase 2). Renders nothing in v1. */}
+          <section id="shows" hidden />
+          <SiteFooter />
+          <PlayerBar />
+        </PlayerProvider>
       </body>
     </html>
   );
