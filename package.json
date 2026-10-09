@@ -13,10 +13,12 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.109.0",
     "geist": "^1.7.2",
     "next": "15.5.27",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -32,6 +34,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.27",
     "jsdom": "^29.1.1",
+    "supabase": "^2.120.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.11"
