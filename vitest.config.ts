@@ -9,6 +9,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // `server-only` throws outside the react-server condition; see the stub.
+      "server-only": fileURLToPath(
+        new URL("./test/stubs/server-only.ts", import.meta.url),
+      ),
     },
   },
   test: {
@@ -16,6 +20,6 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
-    exclude: ["e2e/**", "node_modules/**"],
+    exclude: ["e2e/**", "node_modules/**", "src/**/*.integration.test.ts"],
   },
 });
