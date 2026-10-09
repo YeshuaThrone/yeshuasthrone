@@ -3,6 +3,18 @@ import { defineConfig, devices } from "@playwright/test";
 const PORT = 3000;
 const baseURL = `http://127.0.0.1:${PORT}`;
 
+/**
+ * The e2e server runs with no Supabase: TEST_FIXTURES=1 makes the in-memory
+ * shim serve src/lib/db/fixtures.ts (CHAMPION, a released single, an
+ * upcoming EP with one pre-save link, an unpublished draft). The secrets are
+ * test-only values the specs send back.
+ */
+export const E2E_ENV = {
+  TEST_FIXTURES: "1",
+  PREVIEW_SECRET: "e2e-preview-secret",
+  REVALIDATE_SECRET: "e2e-revalidate-secret",
+} as const;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -29,5 +41,6 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    env: { ...process.env, ...E2E_ENV },
   },
 });

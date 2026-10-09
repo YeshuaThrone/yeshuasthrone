@@ -108,7 +108,7 @@ export function DropAlertForm({ caption, source, onSubmit }: DropAlertFormProps)
         <button
           type="submit"
           disabled={busy}
-          className="shrink-0 rounded-full bg-electric px-5 py-2.5 text-sm font-semibold text-text transition-colors hover:bg-electric-2 hover:text-onyx disabled:opacity-60"
+          className="shrink-0 rounded-full bg-electric-2 px-5 py-2.5 text-sm font-semibold text-onyx transition-opacity hover:opacity-85 disabled:opacity-60"
         >
           {busy ? "Joining…" : "Join the list"}
         </button>
