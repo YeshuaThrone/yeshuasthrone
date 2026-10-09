@@ -50,6 +50,32 @@ jobs:
           path: playwright-report
           retention-days: 7
 
+  # Spec bar on the two pages fans land on first (mobile emulation, production
+  # build): performance >= 0.90, accessibility >= 0.95, seo >= 0.95,
+  # best-practices >= 0.90. Budgets live in lighthouserc.json. TEST_FIXTURES
+  # makes the no-env shim serve the CHAMPION fixture so /music/champion exists.
+  lighthouse:
+    name: Lighthouse budgets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TEST_FIXTURES: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lhci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-report
+          path: .lighthouseci
+          retention-days: 14
+
   # RLS contract against a real local Supabase: `supabase start` applies
   # supabase/migrations + seed.sql, then the integration suite runs as the
   # anon and service roles. Needs Docker (ubuntu-latest has it).
