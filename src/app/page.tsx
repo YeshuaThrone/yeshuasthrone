@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { subscribe } from "@/app/actions/subscribe";
 import { DropAlertForm } from "@/components/alerts/DropAlertForm";
@@ -9,10 +10,29 @@ import { site } from "@/content/site";
 import { story } from "@/content/story";
 import { getFeaturedRelease, getPublishedReleases } from "@/lib/db/queries";
 import { dropAlertCaption, dropAlertSource } from "@/lib/releases/player";
+import { buildMetadata } from "@/lib/seo";
 import { storyTeaser } from "@/lib/teasers";
 
 /** ISR: fans see a fresh home within a minute of a Supabase Studio edit. */
 export const revalidate = 60;
+
+/**
+ * The home card is the flagship's: its OG image when a release is featured,
+ * the site default otherwise. Title is absolute so the home tab reads
+ * "Yeshua Throne — Drops here first." rather than "… · Yeshua Throne".
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const featured = await getFeaturedRelease();
+  return buildMetadata({
+    title: `${site.name} — ${site.tagline}`,
+    absoluteTitle: true,
+    description: featured
+      ? `${featured.title} drops here first. ${site.description}`
+      : site.description,
+    path: "/",
+    ogSlug: featured?.slug,
+  });
+}
 
 const LATEST_LIMIT = 6;
 

@@ -176,7 +176,7 @@ test.describe("POST /api/revalidate", () => {
     expect(ok.status()).toBe(200);
     expect(await ok.json()).toEqual({
       revalidated: true,
-      paths: ["/", "/music", "/music/champion"],
+      paths: ["/", "/music", "/sitemap.xml", "/music/champion"],
     });
   });
 });

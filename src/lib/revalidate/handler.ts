@@ -23,9 +23,9 @@ export function isRevalidateAuthorized(
   return supplied === secret;
 }
 
-/** The paths one revalidation touches: home, the index, and the release when named. */
+/** The paths one revalidation touches: home, the index, the sitemap, and the release when named. */
 export function pathsFor(slug: string | undefined): string[] {
-  const paths = ["/", "/music"];
+  const paths = ["/", "/music", "/sitemap.xml"];
   if (slug) paths.push(`/music/${slug}`);
   return paths;
 }

@@ -1,0 +1,52 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`JSON-LD helpers > MusicGroup snapshot 1`] = `
+{
+  "@context": "https://schema.org",
+  "@type": "MusicGroup",
+  "description": "Yeshua Throne — Austin, TX. Every record premieres here before it reaches streaming.",
+  "foundingLocation": {
+    "@type": "Place",
+    "name": "Austin, TX",
+  },
+  "name": "Yeshua Throne",
+  "sameAs": [
+    "https://instagram.com/yeshuasthrone",
+  ],
+  "url": "https://yeshuathrone.com",
+}
+`;
+
+exports[`buildMetadata > matches the snapshot for a templated page 1`] = `
+{
+  "alternates": {
+    "canonical": "/music",
+  },
+  "description": "Every release.",
+  "openGraph": {
+    "description": "Every release.",
+    "images": [
+      {
+        "alt": "Music — Yeshua Throne",
+        "height": 630,
+        "url": "/api/og/default",
+        "width": 1200,
+      },
+    ],
+    "locale": "en_US",
+    "siteName": "Yeshua Throne",
+    "title": "Music · Yeshua Throne",
+    "type": "website",
+    "url": "/music",
+  },
+  "title": "Music",
+  "twitter": {
+    "card": "summary_large_image",
+    "description": "Every release.",
+    "images": [
+      "/api/og/default",
+    ],
+    "title": "Music · Yeshua Throne",
+  },
+}
+`;

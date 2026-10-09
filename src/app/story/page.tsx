@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { site } from "@/content/site";
 import { story } from "@/content/story";
+import { buildMetadata, musicGroupJsonLd } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Story",
   description: `Who Yeshua Throne is — ${site.location}, the music, and the rails it runs on.`,
-};
+  path: "/story",
+});
 
 /**
  * Hero slot: a real image once `site.storyHeroImage` is set, otherwise a
@@ -48,6 +51,7 @@ function StoryHero() {
 export default function StoryPage() {
   return (
     <article className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-16">
+      <JsonLd data={musicGroupJsonLd()} />
       <header className="flex flex-col gap-6">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted">The story</p>
         <h1 className="text-4xl font-semibold tracking-tight sm:text-6xl">{site.name}</h1>

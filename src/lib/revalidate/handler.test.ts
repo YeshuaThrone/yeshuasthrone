@@ -24,9 +24,9 @@ describe("parseSlug / pathsFor", () => {
     expect(parseSlug({ slug: 42 })).toEqual({ ok: false });
     expect(parseSlug({ slug: "../etc" })).toEqual({ ok: false });
   });
-  it("always touches home and the index", () => {
-    expect(pathsFor(undefined)).toEqual(["/", "/music"]);
-    expect(pathsFor("champion")).toEqual(["/", "/music", "/music/champion"]);
+  it("always touches home, the index and the sitemap", () => {
+    expect(pathsFor(undefined)).toEqual(["/", "/music", "/sitemap.xml"]);
+    expect(pathsFor("champion")).toEqual(["/", "/music", "/sitemap.xml", "/music/champion"]);
   });
 });
 
@@ -52,11 +52,12 @@ describe("handleRevalidate", () => {
     const result = handleRevalidate("s3cret", { slug: "champion" }, d);
     expect(result).toEqual({
       status: 200,
-      body: { revalidated: true, paths: ["/", "/music", "/music/champion"] },
+      body: { revalidated: true, paths: ["/", "/music", "/sitemap.xml", "/music/champion"] },
     });
     expect(d.revalidatePath.mock.calls.map((c) => c[0])).toEqual([
       "/",
       "/music",
+      "/sitemap.xml",
       "/music/champion",
     ]);
   });

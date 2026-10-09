@@ -5,9 +5,17 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { PlayerBar, PlayerProvider } from "@/components/player";
 import { site } from "@/content/site";
+import { siteUrl } from "@/lib/seo";
 import "./globals.css";
 
+/**
+ * `metadataBase` is what turns every page's relative canonical, og:url and
+ * OG image path into an absolute URL. Page-level metadata is built with
+ * `buildMetadata()` (src/lib/seo.ts); this only holds the template and the
+ * site-wide defaults.
+ */
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: {
     default: `${site.name} — ${site.tagline}`,
     template: `%s · ${site.name}`,

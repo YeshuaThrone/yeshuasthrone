@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { YouTubeFacade } from "@/components/media/YouTubeFacade";
 import { archive, type ArchiveEntry } from "@/content/archive";
 import { site } from "@/content/site";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Archive",
   description: `The origin — work from before the ${site.name} name.`,
-};
+  path: "/archive",
+});
 
 function ArchiveItem({ entry }: { entry: ArchiveEntry }) {
   return (

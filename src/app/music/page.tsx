@@ -3,13 +3,15 @@ import Link from "next/link";
 import { ReleaseGrid } from "@/components/release/LatestStrip";
 import { site } from "@/content/site";
 import { getPublishedReleases } from "@/lib/db/queries";
+import { buildMetadata } from "@/lib/seo";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Music",
   description: `Every ${site.name} release, newest first. ${site.tagline}`,
-};
+  path: "/music",
+});
 
 /**
  * All published releases. `getPublishedReleases()` already orders newest
