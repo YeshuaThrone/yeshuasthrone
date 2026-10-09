@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { beforeAll, describe, expect, it } from "vitest";
+import { clientOptions } from "./server";
 import type { Database } from "./types";
 
 /**
@@ -19,15 +20,13 @@ const anonKey = process.env.SUPABASE_TEST_ANON_KEY;
 const serviceKey = process.env.SUPABASE_TEST_SERVICE_ROLE_KEY;
 const configured = Boolean(url && anonKey && serviceKey);
 
-const options = { auth: { persistSession: false, autoRefreshToken: false } };
-
 // Built only when configured: createClient throws on an empty URL, and a
 // skipped describe block still evaluates its body.
 function clients() {
   if (!url || !anonKey || !serviceKey) throw new Error("SUPABASE_TEST_* unset");
   return {
-    anon: createClient<Database>(url, anonKey, options),
-    service: createClient<Database>(url, serviceKey, options),
+    anon: createClient<Database>(url, anonKey, clientOptions),
+    service: createClient<Database>(url, serviceKey, clientOptions),
   };
 }
 

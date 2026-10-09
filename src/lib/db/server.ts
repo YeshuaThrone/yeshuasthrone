@@ -1,6 +1,11 @@
 import "server-only";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  type SupabaseClient,
+  type WebSocketLike,
+  type WebSocketLikeConstructor,
+} from "@supabase/supabase-js";
 import type { Database } from "./types";
 
 /**
@@ -156,8 +161,19 @@ export function isInMemoryShim(client: DbClient): boolean {
 // Clients (memoized per process)
 // ---------------------------------------------------------------------------
 
-const clientOptions = {
+/**
+ * Realtime is never used by this site, but supabase-js constructs a
+ * RealtimeClient eagerly and, on Node < 22 with no native WebSocket, throws
+ * at createClient() unless a transport is supplied. This stub satisfies the
+ * constructor contract and only fails if something actually tries to connect.
+ */
+const NoRealtimeTransport: WebSocketLikeConstructor = function (): WebSocketLike {
+  throw new Error("Realtime is not used by this site; no WebSocket transport.");
+} as unknown as WebSocketLikeConstructor;
+
+export const clientOptions = {
   auth: { persistSession: false, autoRefreshToken: false },
+  realtime: { transport: NoRealtimeTransport },
 } as const;
 
 let anonClient: DbClient | undefined;
