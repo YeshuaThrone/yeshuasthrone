@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   NO_DATABASE_ERROR,
+  UNIQUE_VIOLATION_ERROR,
   createAnonClient,
   createServiceClient,
   isDatabaseConfigured,
@@ -49,6 +50,7 @@ describe("no-env in-memory shim", () => {
   afterEach(() => {
     resetClientsForTests();
     vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   it("is what both clients return when NEXT_PUBLIC_SUPABASE_URL is unset", () => {
@@ -77,10 +79,25 @@ describe("no-env in-memory shim", () => {
   it("writes resolve with a no_database error instead of pretending", async () => {
     const db = createServiceClient(NO_ENV);
     const result = await db
-      .from("drop_alerts")
-      .insert({ email: "fan@example.com" });
+      .from("releases")
+      .insert({ slug: "x", title: "x" });
     expect(result.data).toBeNull();
     expect(result.error).toEqual(NO_DATABASE_ERROR);
+  });
+
+  it("stores drop_alerts in memory and rejects duplicates as 23505", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const db = createServiceClient(NO_ENV);
+    const first = await db.from("drop_alerts").insert({ email: "fan@example.com" });
+    expect(first.error).toBeNull();
+    expect(console.warn).toHaveBeenCalledWith(expect.stringMatching(/in memory only/));
+
+    // citext: case does not make a new subscriber.
+    const dupe = await db.from("drop_alerts").insert({ email: "Fan@Example.com" });
+    expect(dupe.error).toEqual(UNIQUE_VIOLATION_ERROR);
+
+    const other = await db.from("drop_alerts").insert({ email: "other@example.com" });
+    expect(other.error).toBeNull();
   });
 
   it("defaults to process.env", () => {
